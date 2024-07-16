@@ -24,7 +24,7 @@ func WithMaxConnLifetime(t time.Duration) Option {
 	}
 }
 
-var DefaultConfig = &mysql.Config{
+var DefaultConfig = mysql.Config{
 	Timeout:   10 * time.Second,
 	Loc:       time.Local,
 	Params:    map[string]string{"charset": "utf8mb4"},
@@ -35,7 +35,7 @@ type MySQL struct {
 	db              *sql.DB
 	maxConn         int
 	maxConnLifetime time.Duration
-	config          *mysql.Config
+	config          mysql.Config
 }
 
 func (m *MySQL) open() error {
@@ -120,7 +120,7 @@ func (m *MySQL) Close() error {
 	return m.db.Close()
 }
 
-func New(config *mysql.Config, options ...Option) (*MySQL, error) {
+func New(config mysql.Config, options ...Option) (*MySQL, error) {
 	m := &MySQL{
 		maxConn:         20,
 		maxConnLifetime: 3 * time.Minute,
