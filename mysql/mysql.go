@@ -25,10 +25,12 @@ func WithMaxConnLifetime(t time.Duration) Option {
 }
 
 var DefaultConfig = mysql.Config{
-	Timeout:   10 * time.Second,
-	Loc:       time.Local,
-	Params:    map[string]string{"charset": "utf8mb4"},
-	ParseTime: true,
+	Timeout:              10 * time.Second,
+	Loc:                  time.Local,
+	Params:               map[string]string{"charset": "utf8mb4"},
+	ParseTime:            true,
+	AllowNativePasswords: true,
+	CheckConnLiveness:    true,
 }
 
 type MySQL struct {
