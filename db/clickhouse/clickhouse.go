@@ -1,7 +1,6 @@
 package clickhouse
 
 import (
-	"context"
 	"database/sql"
 	"net/url"
 	"time"
@@ -68,10 +67,6 @@ func WithTimeout(timeout time.Duration) Option {
 	}
 }
 
-func NewDefaultOptions() *clickhouse.Options {
-	return &clickhouse.Options{}
-}
-
 func NewOptions(options ...Option) *clickhouse.Options {
 	o := &clickhouse.Options{}
 	for _, option := range options {
@@ -80,21 +75,12 @@ func NewOptions(options ...Option) *clickhouse.Options {
 	return o
 }
 
-func NewDB(option *clickhouse.Options) (*sql.DB, error) {
-	db := clickhouse.OpenDB(option)
-	ctx, cancel := context.WithTimeout(context.Background(), option.DialTimeout)
-	defer cancel()
-	return db, db.PingContext(ctx)
+func NewDB(option *clickhouse.Options) *sql.DB {
+	return clickhouse.OpenDB(option)
 }
 
 func NewConn(option *clickhouse.Options) (clickhouse.Conn, error) {
-	conn, err := clickhouse.Open(option)
-	if err == nil {
-		ctx, cancel := context.WithTimeout(context.Background(), option.DialTimeout)
-		defer cancel()
-		return conn, conn.Ping(ctx)
-	}
-	return conn, err
+	return clickhouse.Open(option)
 }
 
 func NewGormDB(db *sql.DB) (*gorm.DB, error) {
