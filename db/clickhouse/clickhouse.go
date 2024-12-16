@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	gclickhouse "gorm.io/driver/clickhouse"
+	"gorm.io/gorm"
 )
 
 type Option func(options *clickhouse.Options)
@@ -93,4 +95,8 @@ func NewConn(option *clickhouse.Options) (clickhouse.Conn, error) {
 		return conn, conn.Ping(ctx)
 	}
 	return conn, err
+}
+
+func NewGormDB(db *sql.DB) (*gorm.DB, error) {
+	return gorm.Open(gclickhouse.New(gclickhouse.Config{Conn: db}))
 }
