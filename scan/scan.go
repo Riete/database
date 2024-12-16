@@ -7,17 +7,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type MySQLScanner[T any] struct {
+type Scanner[T any] struct {
 	rows    *sql.Rows
 	db      *gorm.DB
 	scanErr error
 }
 
-func (s *MySQLScanner[T]) Columns() ([]string, error) {
+func (s *Scanner[T]) Columns() ([]string, error) {
 	return s.rows.Columns()
 }
 
-func (s *MySQLScanner[T]) ScanFirst() (*T, error) {
+func (s *Scanner[T]) ScanFirst() (*T, error) {
 	if !s.rows.Next() {
 		return nil, sql.ErrNoRows
 	}
@@ -26,7 +26,7 @@ func (s *MySQLScanner[T]) ScanFirst() (*T, error) {
 	return scanTo, s.scanErr
 }
 
-func (s *MySQLScanner[T]) Scan(ctx context.Context) <-chan *T {
+func (s *Scanner[T]) Scan(ctx context.Context) <-chan *T {
 	ch := make(chan *T)
 	go func() {
 		defer close(ch)
@@ -46,7 +46,7 @@ func (s *MySQLScanner[T]) Scan(ctx context.Context) <-chan *T {
 	return ch
 }
 
-func (s *MySQLScanner[T]) ScanToMap(ctx context.Context) <-chan map[string]string {
+func (s *Scanner[T]) ScanToMap(ctx context.Context) <-chan map[string]string {
 	columns, err := s.Columns()
 	if err != nil {
 		return nil
@@ -82,21 +82,21 @@ func (s *MySQLScanner[T]) ScanToMap(ctx context.Context) <-chan map[string]strin
 	return ch
 }
 
-func (s *MySQLScanner[T]) HasNextRS() bool {
+func (s *Scanner[T]) HasNextRS() bool {
 	return s.rows.NextResultSet()
 }
 
-func (s *MySQLScanner[T]) Error() error {
+func (s *Scanner[T]) Error() error {
 	if s.scanErr != nil {
 		return s.scanErr
 	}
 	return s.rows.Err()
 }
 
-func (s *MySQLScanner[T]) Close() error {
+func (s *Scanner[T]) Close() error {
 	return s.rows.Close()
 }
 
-func NewMySQLScanner[T any](rows *sql.Rows, db *gorm.DB, scanTo *T) *MySQLScanner[T] {
-	return &MySQLScanner[T]{rows: rows, db: db}
+func NewScanner[T any](rows *sql.Rows, db *gorm.DB) *Scanner[T] {
+	return &Scanner[T]{rows: rows, db: db}
 }
