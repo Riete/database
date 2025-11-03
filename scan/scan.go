@@ -70,7 +70,7 @@ func (s *Scanner[T]) ScanToMap(ctx context.Context) <-chan map[string]string {
 				row := make(map[string]string, len(columns))
 				for i, v := range values {
 					if v == nil {
-						row[columns[i]] = "NULL"
+						row[columns[i]] = "null"
 					} else {
 						row[columns[i]] = string(v)
 					}
