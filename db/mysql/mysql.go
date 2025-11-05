@@ -10,8 +10,9 @@ import (
 	gmysql "gorm.io/driver/mysql"
 )
 
-func WithAddr(host, port string) mysql.Option {
+func WithAddr(net, host, port string) mysql.Option {
 	return func(config *mysql.Config) error {
+		config.Net = net
 		config.Addr = host + ":" + port
 		return nil
 	}
