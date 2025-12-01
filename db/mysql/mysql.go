@@ -49,9 +49,10 @@ func NewDefaultConfig() *mysql.Config {
 	return config
 }
 
-func NewConfig(options ...mysql.Option) (*mysql.Config, error) {
+func NewConfig(options ...mysql.Option) *mysql.Config {
 	config := NewDefaultConfig()
-	return config, config.Apply(options...)
+	_ = config.Apply(options...)
+	return config
 }
 
 func NewDB(config *mysql.Config) (*sql.DB, error) {
