@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const defaultNullValue = "NULL"
+
 type Scanner[T any] struct {
 	rows    *sql.Rows
 	db      *gorm.DB
@@ -46,7 +48,7 @@ func (s *Scanner[T]) Scan(ctx context.Context) <-chan *T {
 	return ch
 }
 
-func (s *Scanner[T]) ScanToMap(ctx context.Context) <-chan map[string]string {
+func (s *Scanner[T]) ScanToMap(ctx context.Context, nullValue string) <-chan map[string]string {
 	columns, err := s.Columns()
 	if err != nil {
 		return nil
@@ -54,7 +56,7 @@ func (s *Scanner[T]) ScanToMap(ctx context.Context) <-chan map[string]string {
 	ch := make(chan map[string]string)
 	go func() {
 		defer close(ch)
-		values := make([]sql.RawBytes, len(columns))
+		values := make([]sql.NullString, len(columns))
 		scanArgs := make([]interface{}, len(values))
 		for i := range values {
 			scanArgs[i] = &values[i]
@@ -69,10 +71,10 @@ func (s *Scanner[T]) ScanToMap(ctx context.Context) <-chan map[string]string {
 				}
 				row := make(map[string]string, len(columns))
 				for i, v := range values {
-					if v == nil {
-						row[columns[i]] = "null"
+					if v.Valid {
+						row[columns[i]] = v.String
 					} else {
-						row[columns[i]] = string(v)
+						row[columns[i]] = nullValue
 					}
 				}
 				ch <- row
@@ -80,6 +82,10 @@ func (s *Scanner[T]) ScanToMap(ctx context.Context) <-chan map[string]string {
 		}
 	}()
 	return ch
+}
+
+func (s *Scanner[T]) ScanToMapWithDefaultNullValue(ctx context.Context) <-chan map[string]string {
+	return s.ScanToMap(ctx, defaultNullValue)
 }
 
 func (s *Scanner[T]) HasNextRS() bool {
