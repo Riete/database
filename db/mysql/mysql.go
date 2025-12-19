@@ -1,18 +1,41 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
+	"net"
+	"sync"
 	"time"
 
+	"golang.org/x/net/proxy"
 	"gorm.io/gorm"
 
 	"github.com/go-sql-driver/mysql"
 	gmysql "gorm.io/driver/mysql"
 )
 
-func WithAddr(net, host, port string) mysql.Option {
+var registered = make(map[string]bool)
+var mu sync.Mutex
+
+func WithSocks5Proxy(addr string, auth *proxy.Auth) mysql.Option {
 	return func(config *mysql.Config) error {
-		config.Net = net
+		mu.Lock()
+		defer mu.Unlock()
+		proxyNet := "socks5://" + addr
+		if !registered[proxyNet] {
+			p, _ := proxy.SOCKS5("tcp", addr, auth, proxy.Direct)
+			mysql.RegisterDialContext(proxyNet, func(ctx context.Context, addr string) (net.Conn, error) {
+				return p.(proxy.ContextDialer).DialContext(ctx, "tcp", addr)
+			})
+			registered[proxyNet] = true
+		}
+		config.Net = proxyNet
+		return nil
+	}
+}
+
+func WithAddr(host, port string) mysql.Option {
+	return func(config *mysql.Config) error {
 		config.Addr = host + ":" + port
 		return nil
 	}
@@ -46,6 +69,7 @@ func NewDefaultConfig() *mysql.Config {
 	config.Timeout = 10 * time.Second
 	config.Params = map[string]string{"charset": "utf8mb4"}
 	config.ParseTime = true
+	config.Net = "tcp"
 	return config
 }
 
