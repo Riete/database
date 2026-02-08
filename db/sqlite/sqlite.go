@@ -34,7 +34,7 @@ func WithCacheShared() Option {
 	}
 }
 
-func formatDSN(name string, options ...Option) string {
+func FormatDSN(name string, options ...Option) string {
 	dsn := fmt.Sprintf("file:%s", name)
 	if len(options) == 0 {
 		return dsn
@@ -55,9 +55,9 @@ func formatDSN(name string, options ...Option) string {
 }
 
 func NewDB(name string, options ...Option) (*sql.DB, error) {
-	return sql.Open("sqlite3", formatDSN(name, options...))
+	return sql.Open("sqlite3", FormatDSN(name, options...))
 }
 
 func NewGormDB(name string, options ...Option) (*gorm.DB, error) {
-	return gorm.Open(sqlite.Open(formatDSN(name, options...)))
+	return gorm.Open(sqlite.Open(FormatDSN(name, options...)))
 }
