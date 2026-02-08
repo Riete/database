@@ -54,10 +54,10 @@ func FormatDSN(name string, options ...Option) string {
 	return fmt.Sprintf("%s?%s", dsn, strings.Join(param, "&"))
 }
 
-func NewDB(name string, options ...Option) (*sql.DB, error) {
-	return sql.Open("sqlite3", FormatDSN(name, options...))
+func NewDB(path string, options ...Option) (*sql.DB, error) {
+	return sql.Open("sqlite3", FormatDSN(path, options...))
 }
 
-func NewGormDB(name string, options ...Option) (*gorm.DB, error) {
-	return gorm.Open(sqlite.Open(FormatDSN(name, options...)))
+func NewGormDB(db *sql.DB) (*gorm.DB, error) {
+	return gorm.Open(sqlite.New(sqlite.Config{Conn: db}))
 }
