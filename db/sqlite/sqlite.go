@@ -13,12 +13,15 @@ import (
 
 type Option func(map[string]string)
 
-// WithAuth go build -tags "sqlite_userauth" add such tags when compile to enable user auth
-func WithAuth(username, password string) Option {
+func WithReadOnly() Option {
 	return func(m map[string]string) {
-		m["_auth"] = ""
-		m["_auth_user"] = username
-		m["_auth_pass"] = password
+		m["mode"] = "ro"
+	}
+}
+
+func WithQueryOnly() Option {
+	return func(m map[string]string) {
+		m["_query_only"] = "true"
 	}
 }
 
@@ -31,6 +34,13 @@ func WithInMemory() Option {
 func WithCacheShared() Option {
 	return func(m map[string]string) {
 		m["cache"] = "shared"
+	}
+}
+
+// WithJournalMode DELETE | TRUNCATE | PERSIST | MEMORY | WAL | OFF
+func WithJournalMode(mode string) Option {
+	return func(m map[string]string) {
+		m["_journal"] = strings.ToUpper(mode)
 	}
 }
 
