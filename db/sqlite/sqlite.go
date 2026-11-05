@@ -3,12 +3,11 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
 	"strings"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Option func(map[string]string)
@@ -21,7 +20,13 @@ func WithReadOnly() Option {
 
 func WithQueryOnly() Option {
 	return func(m map[string]string) {
-		m["_query_only"] = "true"
+		m["_pragma.query_only"] = "query_only(1)"
+	}
+}
+
+func WithForeignKeys() Option {
+	return func(m map[string]string) {
+		m["_pragma.foreign_keys"] = "foreign_keys(1)"
 	}
 }
 
@@ -40,7 +45,7 @@ func WithCacheShared() Option {
 // WithJournalMode DELETE | TRUNCATE | PERSIST | MEMORY | WAL | OFF
 func WithJournalMode(mode string) Option {
 	return func(m map[string]string) {
-		m["_journal"] = strings.ToUpper(mode)
+		m["_pragma.journal_mode"] = "journal_mode(" + strings.ToUpper(mode) + ")"
 	}
 }
 
@@ -53,21 +58,20 @@ func FormatDSN(name string, options ...Option) string {
 	for _, option := range options {
 		option(params)
 	}
-	var param []string
-	for k, v := range params {
-		if v != "" {
-			param = append(param, fmt.Sprintf("%s=%s", k, v))
-		} else {
-			param = append(param, k)
+	query := make(url.Values)
+	for key, value := range params {
+		if strings.HasPrefix(key, "_pragma.") {
+			key = "_pragma"
 		}
+		query.Add(key, value)
 	}
-	return fmt.Sprintf("%s?%s", dsn, strings.Join(param, "&"))
+	return fmt.Sprintf("%s?%s", dsn, query.Encode())
 }
 
 func NewDB(path string, options ...Option) (*sql.DB, error) {
-	return sql.Open("sqlite3", FormatDSN(path, options...))
+	return sql.Open("sqlite", FormatDSN(path, options...))
 }
 
-func NewGormDB(db *sql.DB) (*gorm.DB, error) {
-	return gorm.Open(sqlite.New(sqlite.Config{Conn: db}))
+func NewGormDB(path string, options ...Option) (*gorm.DB, error) {
+	return gorm.Open(sqlite.Open(FormatDSN(path, options...)))
 }
